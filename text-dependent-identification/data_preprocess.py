@@ -10,8 +10,6 @@ config = get_config()   # get arguments from parser
 clean_path = './Dataset/clean_trainset_wav'  # clean dataset
 noisy_path = './Dataset/noisy_trainset_wav'  # noisy dataset
 
-dirtyFile = '.DS_Store'
-
 def extract_noise():
     """ Extract noise and save the spectrogram (as numpy array in config.noise_path)
         Need: paired clean and noisy data set
@@ -23,11 +21,15 @@ def extract_noise():
     stacked_len = 0
     k = 0
     for i, path in enumerate(os.listdir(clean_path)):
-        if dirtyFile in path:
-            continue
+        if path[-3:] != 'wav':
+            continue;
 
-        clean, sr = librosa.core.load(os.path.join(clean_path, path), sr=8000)  # load clean audio
-        noisy, _ = librosa.core.load(os.path.join(noisy_path, path), sr=sr)     # load noisy audio
+        dur1 = librosa.get_duration(filename=os.path.join(clean_path, path));
+        dur2 = librosa.get_duration(filename=os.path.join(noisy_path, path));
+        dur = min(dur1, dur2)   # process the starting overlapping audio
+
+        clean, sr = librosa.core.load(os.path.join(clean_path, path), sr=8000, duration=dur)  # load clean audio
+        noisy, _ = librosa.core.load(os.path.join(noisy_path, path), sr=sr, duration=dur)     # load noisy audio
 
         noise = clean - noisy       # get noise audio by subtract clean voice from the noisy audio
         S = librosa.core.stft(y=noise, n_fft=config.nfft,
